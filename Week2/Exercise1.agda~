@@ -1,0 +1,88 @@
+{-# OPTIONS --without-K --safe #-}
+
+data Empty : Set where
+
+Empty-elim : {A : Empty → Set} (x : Empty) → A x
+Empty-elim ()
+
+¬_ : Set → Set
+¬ A = A → Empty
+
+Empty-nondep-elim : {B : Set} → Empty → B
+Empty-nondep-elim {B} = Empty-elim {λ _ → B}
+
+is-empty : Set → Set
+is-empty A = A → Empty
+
+Empty-is-empty'' : is-empty Empty
+Empty-is-empty'' = λ x → x
+
+record Unit : Set where
+  constructor
+    ⋆
+
+open Unit
+
+Unit-is-nonempty : ¬ (is-empty Unit)
+Unit-is-nonempty = λ (f : Unit → Empty) → f ⋆
+
+Unit-elim : {A : Unit → Set}
+          → A ⋆
+          → (x : Unit) → A x
+Unit-elim f ⋆ = f
+
+Unit-nondep-elim : {A : Set}
+                 → A
+                 → Unit → A
+Unit-nondep-elim = λ z _ → z
+
+data Bool : Set where
+  ⊤ ⊥ : Bool
+
+Bool-elim : {A : Bool → Set}
+          → A ⊥
+          → A ⊤
+          → (x : Bool) → A x
+Bool-elim t f ⊤ = f
+Bool-elim t f ⊥ = t
+
+Bool-nondep-elim : {A : Set}
+                 → A
+                 → A
+                 → (x : Bool) → A
+Bool-nondep-elim {A} = Bool-elim {λ _ → A}
+
+Π : (A : Set) → (B : A → Set) → Set
+Π A B = (x : A) → B x
+
+_∘_ : {A B C : Set} → (B → C) → (A → B) → A → C
+(f ∘ g) x = f (g x)
+
+module _ where
+  private
+    data Σ {A : Set} (B : A → Set) : Set where
+      _,_ : (x : A) (y : B x) → Σ {A} B
+
+    π₁ : {A : Set} {B : A → Set} → Σ B → A
+    π₁ (x , y) = x
+
+    π₂ : {A : Set} {B : A → Set} → (z : Σ B) → B (π₁ z)
+    π₂ (x , y) = y
+
+record Σ {A : Set} (B : A → Set) : Set where
+  constructor
+    _,_
+  field
+    π₁ : A
+    π₂ : B π₁
+
+open Σ public
+
+Σ-elim : {A : Set} {B : A → Set} {C : (Σ ( λ x → B x)) → Set}
+       → ((x : A) (y : B x) → C (x , y))
+       → (z : Σ B) → C z
+Σ-elim f (x , y) = f x y
+
+_×_ : Set → Set → Set
+A × B = Σ {A} (λ _ → B)
+
