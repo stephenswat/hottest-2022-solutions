@@ -1,33 +1,6 @@
 {-# OPTIONS --safe --without-K --show-implicit #-}
 
-_∘_ : {A B C : Set} → (B → C) → (A → B) → A → C
-(f ∘ g) x = f (g x)
-
-record Σ {A : Set} (B : A → Set) : Set where
-  constructor
-    _,_
-  field
-    π₁ : A
-    π₂ : B π₁
-
-open Σ public
-
-Σ-elim : {A : Set} {B : A → Set} {C : Σ (λ x → B x) → Set}
-       → ((x : A) (y : B x) → C (x , y))
-       → (z : Σ B) → C z
-Σ-elim f (x , y) = f x y 
-
-_×_ : Set → Set → Set
-A × B = Σ {A} (λ _ → B)
-
-data _+_ (A B : Set) : Set where
-  inl : A → A + B
-  inr : B → A + B
-
-data ∅ : Set where
-
-¬_ : Set → Set
-¬ A = A → ∅
+open import Base
 
 -- Exercise 1
 uncurry : {A B X : Set} → (A → B → X) → (A × B → X)
@@ -63,5 +36,30 @@ curry {A} {B} f = λ (a : A) → λ (b : B) → f (a , b)
 [viii] : {A : Set} {B : A → Set} → ¬ (Σ {A} B) → (a : A) → (¬ (B a))
 [viii] p v = λ z → p (v , z)
 
-[ix] : {A : Set} {B : A → Set} → ¬ ((a : A) → B a) → (Σ {A} (λ a → ¬ (B a)))
-[ix] p = {!!} , {!!}
+-- Unprovable
+-- [ix] : {A : Set} {B : A → Set} → ¬ ((a : A) → B a) → (Σ {A} (λ a → ¬ (B a)))
+
+[x] : {A B : Set} {C : A → B → Set}
+    → ((a : A) → (Σ {B} (λ b → C a b)))
+    → Σ {A → B} (λ f → (a : A) → C a (f a))
+[x] {A} p = (λ (a : A) → π₁ (p a)) , (λ (a : A) → π₂ (p a))
+
+
+-- Exercise 3
+¬¬_ : Set → Set
+¬¬ A = ¬ (¬ A)
+
+¬¬¬_ : Set → Set
+¬¬¬ A = ¬ (¬¬ A)
+
+tne : {A : Set} → (¬¬¬ A) → (¬ A)
+tne p = λ a → p (λ b → b a)
+
+
+-- Exercise 4
+¬¬-functor : {A B : Set} → (A → B) → ¬¬ A → ¬¬ B
+¬¬-functor p a = λ f → a (f ∘ p)
+
+¬¬-kleisli : {A B : Set} → (A → ¬¬ B) → ¬¬ A → ¬¬ B
+¬¬-kleisli p a = λ f → a (λ g → (p g) f)
+
